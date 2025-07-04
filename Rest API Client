@@ -1,0 +1,61 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
+
+public class WeatherApiClient {
+
+    public static String fetchWeatherData(String apiUrl) {
+        StringBuilder response = new StringBuilder();
+
+        try {
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException("HTTP error code: " + conn.getResponseCode());
+            }
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            conn.disconnect();
+
+        } catch (Exception e) {
+            System.out.println(" Error fetching data: " + e.getMessage());
+        }
+
+        return response.toString();
+    }
+
+    public static void displayWeatherInfo(String jsonData) {
+        JSONObject json = new JSONObject(jsonData);
+        JSONObject current = json.getJSONObject("current_weather");
+
+        System.out.println("\n Weather Report:");
+        System.out.println("----------------------------");
+        System.out.println("Temperature: " + current.getDouble("temperature") + "°C");
+        System.out.println("Wind Speed: " + current.getDouble("windspeed") + " km/h");
+        System.out.println("Wind Direction: " + current.getDouble("winddirection") + "°");
+        System.out.println("Time: " + current.getString("time"));
+    }
+
+    public static void main(String[] args) {
+        String apiUrl = "https://api.open-meteo.com/v1/forecast?latitude=28.6139&longitude=77.2090&current_weather=true";
+
+        String data = fetchWeatherData(apiUrl);
+        if (!data.isEmpty()) {
+            displayWeatherInfo(data);
+        }
+    }
+}
